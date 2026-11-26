@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>VCF-Öffner</title>
+<style>
+:root { --bg: #F3F5F9; --surface: #FFFFFF; --ink: #171E59; --ink-2: #647087; --line: #D3D9E6; --btn: #171E59; --btn-ink: #FFFFFF; --focus: #3F5BD8; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0C1030; --surface: #161C52; --ink: #EEF1FA; --ink-2: #A9B1C9; --line: #2E377F; --btn: #8DC051; --btn-ink: #11163F; --focus: #D8DE6F; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 Candara, Optima, "Avenir Next", "Segoe UI", system-ui, sans-serif; }
+main { max-width: 480px; margin: 0 auto; padding: 32px max(16px, env(safe-area-inset-right, 0px)) 32px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 16px; }
+h1 { margin: 0; font-size: 1.5rem; line-height: 1.2; overflow-wrap: anywhere; }
+p { margin: 0; }
+.sub { color: var(--ink-2); }
+.btn { display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 18px; border-radius: 10px; background: var(--btn); color: var(--btn-ink); font-weight: 700; font-size: 1.0625rem; text-decoration: none; }
+.link { color: var(--ink); text-underline-offset: 3px; font-size: .9375rem; }
+.fine { color: var(--ink-2); font-size: .8125rem; border-top: 1px solid var(--line); padding-top: 12px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Kontakt öffnen</h1>
+  <p class="sub" id="msg">Der Kontakt wird vorbereitet …</p>
+  <a class="btn" id="open" hidden>Kontakt öffnen</a>
+  <p><a class="link" id="file" hidden>Stattdessen als Datei laden</a></p>
+  <p class="fine">Diese Seite speichert nichts und sendet nichts. Die Kontaktdaten stehen nur im Link und werden allein in diesem Browser verarbeitet.</p>
+</main>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var raw = location.hash.slice(1);
+  // Drop the contact data from the address bar and from this history entry.
+  try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+
+  /*PURE-START*/
+  function decodeLink(fragment) {
+    if (!fragment || fragment.slice(0, 3) !== "v1.") return null;
+    var b64 = fragment.slice(3).replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    if (!/^BEGIN:VCARD\r?\n/.test(text) || !/END:VCARD\r?\n?$/.test(text)) return null;
+    return text;
+  }
+  function vUnesc(s) {
+    return s.replace(/\\([\\,;nN])/g, function (m, c) { return c === "n" || c === "N" ? " " : c; });
+  }
+  function summary(text) {
+    var names = [];
+    var re = /^FN:(.*)$/gm, m;
+    while ((m = re.exec(text))) names.push(vUnesc(m[1].replace(/\r$/, "")).trim());
+    return names;
+  }
+  function fileName(names) {
+    var base = names.length === 1 ? names[0] : "Visitenkarten";
+    base = base.normalize("NFKD").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60);
+    return (base || "Kontakt") + ".vcf";
+  }
+  /*PURE-END*/
+
+  if (!raw) { $("msg").textContent = "Im Link steht kein Kontakt. Diese Seite wird vom Visitenkarten-Scanner aufgerufen."; return; }
+  if (raw.length > 400000) { $("msg").textContent = "Der Link ist zu lang. Bitte weniger Karten auf einmal öffnen."; return; }
+  var text = null;
+  try { text = decodeLink(raw); } catch (e) { text = null; }
+  if (!text) { $("msg").textContent = "Der Link ist unvollständig oder beschädigt. Bitte im Scanner erneut auf „In Kontakte“ tippen."; return; }
+
+  var names = summary(text);
+  var many = names.length > 1;
+  $("title").textContent = many ? names.length + " Kontakte" : (names[0] || "Kontakt");
+  $("msg").textContent = many
+    ? names.slice(0, 6).join(", ") + (names.length > 6 ? " und " + (names.length - 6) + " weitere" : "")
+    : "Öffnet die Kontaktkarte. Dort „Neuen Kontakt erstellen“ wählen.";
+
+  var url = URL.createObjectURL(new Blob([text], { type: "text/vcard" }));
+  var open = $("open"), file = $("file");
+  open.textContent = many ? "Kontakte öffnen" : "Kontakt öffnen";
+  open.href = url; open.hidden = false;
+  file.href = url; file.setAttribute("download", fileName(names)); file.hidden = false;
+
+  // On iPhone and iPad the contact card can be shown right away; elsewhere wait for the tap.
+  var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (ios) setTimeout(function () { location.href = url; }, 200);
+})();
+</script>
+</body>
+</html>
