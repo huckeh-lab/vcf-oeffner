@@ -6,21 +6,24 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
 <title>VCF-Öffner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Instrument+Serif&display=swap">
 <style>
-:root { --bg: #F3F5F9; --surface: #FFFFFF; --ink: #171E59; --ink-2: #647087; --line: #D3D9E6; --btn: #171E59; --btn-ink: #FFFFFF; --focus: #3F5BD8; }
+:root { --bg: #ededee; --ink: #18181a; --ink-2: #55555a; --ink-3: #6b6b70; --line: rgba(24, 24, 26, 0.12); --btn: #18181a; --btn-ink: #fafafa; }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0C1030; --surface: #161C52; --ink: #EEF1FA; --ink-2: #A9B1C9; --line: #2E377F; --btn: #8DC051; --btn-ink: #11163F; --focus: #D8DE6F; color-scheme: dark; }
+  :root { --bg: #141415; --ink: #ededed; --ink-2: #a1a1a6; --ink-3: #85858b; --line: rgba(237, 237, 237, 0.12); --btn: #ededed; --btn-ink: #141415; color-scheme: dark; }
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 Candara, Optima, "Avenir Next", "Segoe UI", system-ui, sans-serif; }
-main { max-width: 480px; margin: 0 auto; padding: 32px max(16px, env(safe-area-inset-right, 0px)) 32px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 16px; }
-h1 { margin: 0; font-size: 1.5rem; line-height: 1.2; overflow-wrap: anywhere; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/22px Geist, -apple-system, "SF Pro Text", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+main { max-width: 480px; margin: 0 auto; padding: 48px max(16px, env(safe-area-inset-right, 0px)) 32px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 16px; }
+h1 { margin: 0; font-family: "Instrument Serif", "Iowan Old Style", Georgia, serif; font-weight: 400; font-size: 36px; line-height: 40px; overflow-wrap: anywhere; }
 p { margin: 0; }
 .sub { color: var(--ink-2); }
-.btn { display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 18px; border-radius: 10px; background: var(--btn); color: var(--btn-ink); font-weight: 700; font-size: 1.0625rem; text-decoration: none; }
-.link { color: var(--ink); text-underline-offset: 3px; font-size: .9375rem; }
-.fine { color: var(--ink-2); font-size: .8125rem; border-top: 1px solid var(--line); padding-top: 12px; }
-:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.btn { display: flex; align-items: center; justify-content: center; min-height: 52px; margin-top: 8px; padding: 0 20px; border-radius: 14px; background: var(--btn); color: var(--btn-ink); font-size: 16px; font-weight: 500; text-decoration: none; touch-action: manipulation; user-select: none; -webkit-user-select: none; transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1); }
+.btn:active { transform: scale(0.98); }
+.link { color: var(--ink-2); font-size: 14px; text-decoration-color: var(--line); text-underline-offset: 4px; }
+.fine { color: var(--ink-3); font-size: 13px; line-height: 20px; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 8px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 [hidden] { display: none !important; }
 </style>
 </head>
@@ -68,11 +71,11 @@ p { margin: 0; }
   }
   /*PURE-END*/
 
-  if (!raw) { $("msg").textContent = "Im Link steht kein Kontakt. Diese Seite wird vom Visitenkarten-Scanner aufgerufen."; return; }
+  if (!raw) { $("msg").textContent = "Im Link steht kein Kontakt. Diese Seite wird von Contact Control aufgerufen."; return; }
   if (raw.length > 400000) { $("msg").textContent = "Der Link ist zu lang. Bitte weniger Karten auf einmal öffnen."; return; }
   var text = null;
   try { text = decodeLink(raw); } catch (e) { text = null; }
-  if (!text) { $("msg").textContent = "Der Link ist unvollständig oder beschädigt. Bitte im Scanner erneut auf „In Kontakte“ tippen."; return; }
+  if (!text) { $("msg").textContent = "Der Link ist unvollständig oder beschädigt. Bitte in Contact Control erneut auf „In Kontakte“ tippen."; return; }
 
   var names = summary(text);
   var many = names.length > 1;
